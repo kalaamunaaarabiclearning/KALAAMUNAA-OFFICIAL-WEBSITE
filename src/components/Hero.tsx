@@ -1,11 +1,20 @@
 import React from 'react';
 import { ArrowRight, CheckCircle2, MessageCircle, PlayCircle, Award, BookCheck } from 'lucide-react';
+import { HeroContent } from '../types';
+import { INITIAL_HERO_CONTENT } from '../data/initialData';
 
 interface HeroProps {
+  content?: HeroContent;
   onExploreCourses: () => void;
 }
 
-export const Hero: React.FC<HeroProps> = ({ onExploreCourses }) => {
+export const Hero: React.FC<HeroProps> = ({ content, onExploreCourses }) => {
+  const data = content || INITIAL_HERO_CONTENT;
+
+  const waUrl = `https://wa.me/${data.whatsappNumber || '6282311776535'}?text=${encodeURIComponent(
+    data.whatsappMessage || 'Assalamualaikum Admin Kalaamunaa, saya ingin tanya-tanya mengenai kursus bahasa Arab'
+  )}`;
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-[#003380] via-[#0047AB] to-[#003884] text-white pt-16 pb-24 lg:pt-20 lg:pb-32">
       {/* Decorative Islamic geometric background lines */}
@@ -30,26 +39,25 @@ export const Hero: React.FC<HeroProps> = ({ onExploreCourses }) => {
           
           {/* Left Text Column */}
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-blue-100 text-xs sm:text-sm font-medium">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-              <span>Program Intensif Online Bersama Mudarris Kalaamunaa</span>
-            </div>
+            {data.badge && (
+              <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-blue-100 text-xs sm:text-sm font-medium">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                <span>{data.badge}</span>
+              </div>
+            )}
 
-            <div className="font-arabic text-amber-300 text-lg sm:text-2xl font-bold tracking-wide">
-              تَعَلَّمِ العَرَبِيَّةَ فَإِنَّهَا مِنْ دِينِكُمْ
-            </div>
+            {data.arabicQuote && (
+              <div className="font-arabic text-amber-300 text-lg sm:text-2xl font-bold tracking-wide">
+                {data.arabicQuote}
+              </div>
+            )}
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight sm:leading-tight">
-              Kuasai Bahasa Arab <br className="hidden sm:inline" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-amber-200">
-                Al-Qur'an & Percakapan
-              </span>{' '}
-              Secara Terstruktur
+              {data.title}
             </h1>
 
-            <p className="text-base sm:text-lg text-blue-100/90 max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed">
-              Pelajari Nahwu, Sharaf, dan Muhadatsah praktis langkah demi langkah. Sistem pembelajaran terpadu dengan 
-              <span className="text-white font-semibold"> verifikasi video bertahap</span>, <span className="text-white font-semibold">kuis evaluasi</span>, dan <span className="text-white font-semibold">e-sertifikat kelulusan</span>.
+            <p className="text-base sm:text-lg text-blue-100/90 max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed whitespace-pre-line">
+              {data.description}
             </p>
 
             {/* CTAs */}
@@ -58,36 +66,32 @@ export const Hero: React.FC<HeroProps> = ({ onExploreCourses }) => {
                 onClick={onExploreCourses}
                 className="w-full sm:w-auto px-8 py-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-base transition-all shadow-lg hover:shadow-xl hover:scale-102 flex items-center justify-center space-x-2 cursor-pointer"
               >
-                <span>Pilih Kursus Sekarang</span>
+                <span>{data.exploreButtonText || 'Pilih Kursus Sekarang'}</span>
                 <ArrowRight className="w-5 h-5" />
               </button>
 
               <a
-                href="https://wa.me/6282311776535?text=Assalamualaikum%20Admin%20Kalaamunaa,%20saya%20ingin%20tanya-tanya%20mengenai%20kursus%20bahasa%20Arab"
+                href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto px-6 py-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 text-white font-semibold text-base transition-all flex items-center justify-center space-x-2 backdrop-blur-xs"
               >
                 <MessageCircle className="w-5 h-5 text-emerald-400" />
-                <span>Konsultasi WhatsApp</span>
+                <span>{data.consultationButtonText || 'Konsultasi WhatsApp'}</span>
               </a>
             </div>
 
             {/* Micro Benefits list */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-4 text-xs sm:text-sm text-blue-100/80 border-t border-white/15">
-              <div className="flex items-center space-x-2">
-                <CheckCircle2 className="w-4 h-4 text-amber-300 shrink-0" />
-                <span>Materi dari Dasar</span>
+            {data.benefits && data.benefits.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-4 text-xs sm:text-sm text-blue-100/80 border-t border-white/15">
+                {data.benefits.map((benefit, idx) => (
+                  <div key={idx} className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-amber-300 shrink-0" />
+                    <span>{benefit}</span>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle2 className="w-4 h-4 text-amber-300 shrink-0" />
-                <span>Kuis Tiap Bab</span>
-              </div>
-              <div className="flex items-center space-x-2 col-span-2 sm:col-span-1">
-                <CheckCircle2 className="w-4 h-4 text-amber-300 shrink-0" />
-                <span>Sertifikat Resmi</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Right Visual Card Column */}
@@ -100,13 +104,15 @@ export const Hero: React.FC<HeroProps> = ({ onExploreCourses }) => {
                       ع
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm">Metode Kalaamunaa</h4>
-                      <p className="text-xs text-blue-200">Sistem Belajar Bertingkat</p>
+                      <h4 className="font-bold text-sm">{data.cardTitle || 'Metode Kalaamunaa'}</h4>
+                      <p className="text-xs text-blue-200">{data.cardSubtitle || 'Sistem Belajar Bertingkat'}</p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                    Terverifikasi
-                  </span>
+                  {data.cardBadge && (
+                    <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                      {data.cardBadge}
+                    </span>
+                  )}
                 </div>
 
                 {/* Step cards visual */}
@@ -116,10 +122,10 @@ export const Hero: React.FC<HeroProps> = ({ onExploreCourses }) => {
                       <PlayCircle className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs text-blue-200">Tahap 1</p>
-                      <p className="text-xs sm:text-sm font-semibold">Tonton Video Materi YouTube</p>
+                      <p className="text-xs text-blue-200">{data.step1Title}</p>
+                      <p className="text-xs sm:text-sm font-semibold">{data.step1Desc}</p>
                     </div>
-                    <span className="text-[11px] text-amber-300 font-medium">Klik Selesai</span>
+                    {data.step1Badge && <span className="text-[11px] text-amber-300 font-medium">{data.step1Badge}</span>}
                   </div>
 
                   <div className="p-3.5 rounded-xl bg-white/10 border border-white/10 flex items-center space-x-3">
@@ -127,10 +133,10 @@ export const Hero: React.FC<HeroProps> = ({ onExploreCourses }) => {
                       <BookCheck className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs text-blue-200">Tahap 2</p>
-                      <p className="text-xs sm:text-sm font-semibold">Kerjakan Kuis Google Form</p>
+                      <p className="text-xs text-blue-200">{data.step2Title}</p>
+                      <p className="text-xs sm:text-sm font-semibold">{data.step2Desc}</p>
                     </div>
-                    <span className="text-[11px] text-emerald-300 font-medium">Buka Materi</span>
+                    {data.step2Badge && <span className="text-[11px] text-emerald-300 font-medium">{data.step2Badge}</span>}
                   </div>
 
                   <div className="p-3.5 rounded-xl bg-white/10 border border-white/10 flex items-center space-x-3">
@@ -138,17 +144,17 @@ export const Hero: React.FC<HeroProps> = ({ onExploreCourses }) => {
                       <Award className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs text-blue-200">Tahap Akhir</p>
-                      <p className="text-xs sm:text-sm font-semibold">Ajukan E-Sertifikat Kelulusan</p>
+                      <p className="text-xs text-blue-200">{data.step3Title}</p>
+                      <p className="text-xs sm:text-sm font-semibold">{data.step3Desc}</p>
                     </div>
-                    <span className="text-[11px] text-emerald-300 font-medium">Form Otomatis</span>
+                    {data.step3Badge && <span className="text-[11px] text-emerald-300 font-medium">{data.step3Badge}</span>}
                   </div>
                 </div>
 
                 <div className="pt-2">
                   <div className="p-3 rounded-xl bg-blue-950/60 border border-white/10 text-xs text-blue-200 flex items-center justify-between">
-                    <span>Approval Kursus via WhatsApp</span>
-                    <span className="font-semibold text-emerald-300">0823-1177-6535</span>
+                    <span>{data.footerNote || 'Approval Kursus via WhatsApp'}</span>
+                    <span className="font-semibold text-emerald-300">{data.whatsappNumber || '0823-1177-6535'}</span>
                   </div>
                 </div>
               </div>
@@ -160,3 +166,4 @@ export const Hero: React.FC<HeroProps> = ({ onExploreCourses }) => {
     </section>
   );
 };
+

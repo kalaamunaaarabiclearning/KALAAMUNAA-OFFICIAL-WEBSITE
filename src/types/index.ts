@@ -96,3 +96,43 @@ export interface AdminPost {
   thumbnail?: string;
   createdAt: string;
 }
+
+export interface HeroContent {
+  badge: string;
+  arabicQuote: string;
+  title: string;
+  description: string;
+  exploreButtonText: string;
+  consultationButtonText: string;
+  whatsappNumber: string;
+  whatsappMessage: string;
+  benefits: string[];
+  cardTitle: string;
+  cardSubtitle: string;
+  cardBadge: string;
+  step1Title: string;
+  step1Desc: string;
+  step1Badge: string;
+  step2Title: string;
+  step2Desc: string;
+  step2Badge: string;
+  step3Title: string;
+  step3Desc: string;
+  step3Badge: string;
+  footerNote: string;
+}
+
+export interface FeatureItem {
+  id: string;
+  title: string;
+  desc: string;
+  badge: string;
+}
+
+export interface FeaturesContent {
+  badge: string;
+  title: string;
+  description: string;
+  items: FeatureItem[];
+}
+

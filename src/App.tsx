@@ -8,9 +8,11 @@ import {
   removeFromCart as storageRemoveFromCart, 
   getTestimonials, 
   getPosts, 
+  getHeroContent,
+  getFeaturesContent,
   initializeStorage 
 } from './services/storage';
-import { User, Course, CartItem, Testimonial, AdminPost } from './types';
+import { User, Course, CartItem, Testimonial, AdminPost, HeroContent, FeaturesContent } from './types';
 
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -38,6 +40,8 @@ export default function App() {
   const [cart, setCart] = useState<CartItem[]>(() => getCart());
   const [testimonials, setTestimonials] = useState<Testimonial[]>(() => getTestimonials());
   const [posts, setPosts] = useState<AdminPost[]>(() => getPosts());
+  const [heroContent, setHeroContent] = useState<HeroContent>(() => getHeroContent());
+  const [featuresContent, setFeaturesContent] = useState<FeaturesContent>(() => getFeaturesContent());
 
   // View routing: 'landing' | 'student' | 'admin' | 'classroom'
   const [currentView, setCurrentView] = useState<'landing' | 'student' | 'admin' | 'classroom'>('landing');
@@ -64,6 +68,8 @@ export default function App() {
     setCourses(getCourses());
     setTestimonials(getTestimonials());
     setPosts(getPosts());
+    setHeroContent(getHeroContent());
+    setFeaturesContent(getFeaturesContent());
   };
 
   // Cart operations
@@ -141,13 +147,14 @@ export default function App() {
         {currentView === 'landing' && (
           <>
             <Hero
+              content={heroContent}
               onExploreCourses={() => {
                 const el = document.getElementById('kursus');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
             />
 
-            <Features />
+            <Features content={featuresContent} />
 
             <CourseCatalog
               courses={courses}

@@ -18,7 +18,10 @@ import {
   Save,
   X,
   FileText,
-  Star
+  Star,
+  Layout,
+  Sparkles,
+  RotateCcw
 } from 'lucide-react';
 import { 
   Order, 
@@ -26,7 +29,10 @@ import {
   Lesson, 
   AdminPost, 
   Testimonial, 
-  User 
+  User,
+  HeroContent,
+  FeaturesContent,
+  FeatureItem
 } from '../types';
 import { 
   getOrders, 
@@ -38,21 +44,35 @@ import {
   getTestimonials, 
   saveTestimonials, 
   getUsers, 
-  formatRupiah 
+  formatRupiah,
+  getHeroContent,
+  saveHeroContent,
+  getFeaturesContent,
+  saveFeaturesContent
 } from '../services/storage';
+import { INITIAL_HERO_CONTENT, INITIAL_FEATURES_CONTENT } from '../data/initialData';
 
 interface AdminDashboardProps {
   onCourseUpdated: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onCourseUpdated }) => {
-  const [activeTab, setActiveTab] = useState<'orders' | 'courses' | 'posts' | 'testimonials' | 'students'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'courses' | 'landing_content' | 'posts' | 'testimonials' | 'students'>('orders');
 
   // Local state for live reactivity
   const [orders, setOrders] = useState<Order[]>(() => getOrders());
   const [courses, setCourses] = useState<Course[]>(() => getCourses());
   const [posts, setPosts] = useState<AdminPost[]>(() => getPosts());
   const [testimonials, setTestimonials] = useState<Testimonial[]>(() => getTestimonials());
+  const [heroForm, setHeroForm] = useState<HeroContent>(() => getHeroContent());
+  const [featuresForm, setFeaturesForm] = useState<FeaturesContent>(() => getFeaturesContent());
+  const [contentSubTab, setContentSubTab] = useState<'hero' | 'features'>('hero');
+  const [contentToast, setContentToast] = useState<string | null>(null);
+
+  const showContentToast = (msg: string) => {
+    setContentToast(msg);
+    setTimeout(() => setContentToast(null), 3500);
+  };
   const users = getUsers().filter((u) => u.role === 'student');
 
   // Modal states for Courses & Lessons
@@ -71,6 +91,80 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onCourseUpdated 
   // Testimonial Modal
   const [isTestimonialModalOpen, setIsTestimonialModalOpen] = useState(false);
   const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
+
+  // ---------------- HERO & FEATURES CUSTOMIZATION LOGIC ----------------
+  const handleSaveHero = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveHeroContent(heroForm);
+    onCourseUpdated();
+    showContentToast('Teks Bagian Beranda (Hero) berhasil disimpan dan diperbarui!');
+  };
+
+  const handleResetHero = () => {
+    if (!confirm('Kembalikan teks Beranda ke pengaturan default Kalaamunaa?')) return;
+    setHeroForm(INITIAL_HERO_CONTENT);
+    saveHeroContent(INITIAL_HERO_CONTENT);
+    onCourseUpdated();
+    showContentToast('Teks Beranda dikembalikan ke default.');
+  };
+
+  const handleBenefitChange = (index: number, val: string) => {
+    const next = [...heroForm.benefits];
+    next[index] = val;
+    setHeroForm({ ...heroForm, benefits: next });
+  };
+
+  const handleAddBenefit = () => {
+    setHeroForm({ ...heroForm, benefits: [...heroForm.benefits, 'Keunggulan baru'] });
+  };
+
+  const handleRemoveBenefit = (index: number) => {
+    if (heroForm.benefits.length <= 1) {
+      alert('Minimal harus ada 1 poin keuntungan.');
+      return;
+    }
+    setHeroForm({ ...heroForm, benefits: heroForm.benefits.filter((_, i) => i !== index) });
+  };
+
+  const handleSaveFeatures = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveFeaturesContent(featuresForm);
+    onCourseUpdated();
+    showContentToast('Teks Bagian Keunggulan berhasil disimpan dan diperbarui!');
+  };
+
+  const handleResetFeatures = () => {
+    if (!confirm('Kembalikan teks Keunggulan ke pengaturan default Kalaamunaa?')) return;
+    setFeaturesForm(INITIAL_FEATURES_CONTENT);
+    saveFeaturesContent(INITIAL_FEATURES_CONTENT);
+    onCourseUpdated();
+    showContentToast('Teks Keunggulan dikembalikan ke default.');
+  };
+
+  const handleUpdateFeatureItem = (index: number, field: keyof FeatureItem, value: string) => {
+    const nextItems = [...featuresForm.items];
+    nextItems[index] = { ...nextItems[index], [field]: value };
+    setFeaturesForm({ ...featuresForm, items: nextItems });
+  };
+
+  const handleAddFeatureItem = () => {
+    const newItem: FeatureItem = {
+      id: `feat-${Date.now()}`,
+      title: 'Keunggulan Baru',
+      desc: 'Tuliskan penjelasan keunggulan metode belajar Kalaamunaa di sini.',
+      badge: 'Fasilitas Unggulan',
+    };
+    setFeaturesForm({ ...featuresForm, items: [...featuresForm.items, newItem] });
+  };
+
+  const handleRemoveFeatureItem = (index: number) => {
+    if (featuresForm.items.length <= 1) {
+      alert('Minimal harus ada satu poin keunggulan.');
+      return;
+    }
+    const nextItems = featuresForm.items.filter((_, i) => i !== index);
+    setFeaturesForm({ ...featuresForm, items: nextItems });
+  };
 
   // ---------------- ORDER APPROVAL LOGIC ----------------
   const handleApproveOrder = (orderId: string) => {
@@ -471,6 +565,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onCourseUpdated 
           </button>
 
           <button
+            onClick={() => setActiveTab('landing_content')}
+            className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center space-x-2 ${
+              activeTab === 'landing_content'
+                ? 'bg-[#0047AB] text-white shadow-md'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <Layout className="w-4 h-4" />
+            <span>Kustom Teks Beranda & Keunggulan</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('posts')}
             className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center space-x-2 ${
               activeTab === 'posts'
@@ -733,6 +839,553 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onCourseUpdated 
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ---------------- TAB: CUSTOMIZE LANDING (BERANDA & KEUNGGULAN) ---------------- */}
+        {activeTab === 'landing_content' && (
+          <div className="space-y-6">
+            {/* Header section */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-50 text-[#0047AB] text-xs font-bold mb-1.5">
+                  <Layout className="w-3.5 h-3.5" />
+                  <span>Kustomisasi Teks Landing Page</span>
+                </div>
+                <h3 className="text-xl font-extrabold text-slate-900">
+                  Pengaturan Teks Bagian Beranda & Keunggulan
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+                  Sesuaikan teks headline, kutipan bahasa Arab, tombol konsultasi WhatsApp, serta poin-poin keunggulan kursus secara instan. Perubahan akan langsung tampil di halaman depan.
+                </p>
+              </div>
+
+              {/* Sub-tab navigation */}
+              <div className="flex items-center bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shrink-0 self-start md:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setContentSubTab('hero')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
+                    contentSubTab === 'hero'
+                      ? 'bg-white text-[#0047AB] shadow-sm font-extrabold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>1. Teks Beranda (Hero)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setContentSubTab('features')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 ${
+                    contentSubTab === 'features'
+                      ? 'bg-white text-[#0047AB] shadow-sm font-extrabold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>2. Teks Keunggulan</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Notification alert toast */}
+            {contentToast && (
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-bold flex items-center space-x-2 shadow-sm animate-in fade-in duration-200">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span>{contentToast}</span>
+              </div>
+            )}
+
+            {/* ============= SUB-TAB 1: BERANDA (HERO) ============= */}
+            {contentSubTab === 'hero' && (
+              <form onSubmit={handleSaveHero} className="space-y-6">
+                {/* Bagian 1: Teks Utama */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+                  <div className="border-b border-slate-100 pb-4">
+                    <h4 className="font-bold text-base text-slate-900 flex items-center space-x-2">
+                      <span className="w-6 h-6 rounded-lg bg-blue-100 text-[#0047AB] text-xs font-extrabold flex items-center justify-center">A</span>
+                      <span>Teks Utama & Kutipan Beranda</span>
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Teks yang tampil paling atas di layar pengunjung website Kalaamunaa.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-bold text-slate-700">Badge Atas Beranda</label>
+                      <input
+                        type="text"
+                        value={heroForm.badge}
+                        onChange={(e) => setHeroForm({ ...heroForm, badge: e.target.value })}
+                        placeholder="Contoh: Program Intensif Online Bersama Mudarris Kalaamunaa"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
+                      />
+                      <p className="text-[11px] text-slate-400">Pita penanda kecil di atas judul utama.</p>
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-bold text-slate-700">Kutipan Bahasa Arab (Font Amiri)</label>
+                      <input
+                        type="text"
+                        value={heroForm.arabicQuote}
+                        onChange={(e) => setHeroForm({ ...heroForm, arabicQuote: e.target.value })}
+                        placeholder="Contoh: تَعَلَّمِ العَرَبِيَّةَ فَإِنَّهَا مِنْ دِينِكُمْ"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-arabic text-lg focus:outline-hidden focus:border-[#0047AB] text-slate-900"
+                      />
+                      <p className="text-[11px] text-slate-400">Ditampilkan dengan khat Arab tebal di atas judul.</p>
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-bold text-slate-700">Judul Utama Beranda (Heading)</label>
+                      <input
+                        type="text"
+                        value={heroForm.title}
+                        onChange={(e) => setHeroForm({ ...heroForm, title: e.target.value })}
+                        placeholder="Contoh: Kuasai Bahasa Arab Al-Qur'an & Percakapan Secara Terstruktur"
+                        required
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold focus:outline-hidden focus:border-[#0047AB]"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-bold text-slate-700">Deskripsi / Paragraf Pengantar</label>
+                      <textarea
+                        rows={3}
+                        value={heroForm.description}
+                        onChange={(e) => setHeroForm({ ...heroForm, description: e.target.value })}
+                        placeholder="Tuliskan pengantar singkat mengenai metode belajar bahasa Arab di Kalaamunaa..."
+                        required
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bagian 2: Tombol CTA & WhatsApp */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+                  <div className="border-b border-slate-100 pb-4">
+                    <h4 className="font-bold text-base text-slate-900 flex items-center space-x-2">
+                      <span className="w-6 h-6 rounded-lg bg-blue-100 text-[#0047AB] text-xs font-extrabold flex items-center justify-center">B</span>
+                      <span>Tombol Aksi (CTA) & Jalur WhatsApp</span>
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Pengaturan tombol navigasi dan kontak langsung bagi calon peserta.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Teks Tombol Utama (Kuning)</label>
+                      <input
+                        type="text"
+                        value={heroForm.exploreButtonText}
+                        onChange={(e) => setHeroForm({ ...heroForm, exploreButtonText: e.target.value })}
+                        placeholder="Pilih Kursus Sekarang"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Teks Tombol Konsultasi</label>
+                      <input
+                        type="text"
+                        value={heroForm.consultationButtonText}
+                        onChange={(e) => setHeroForm({ ...heroForm, consultationButtonText: e.target.value })}
+                        placeholder="Konsultasi WhatsApp"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Nomor WhatsApp Admin (Format 62...)</label>
+                      <input
+                        type="text"
+                        value={heroForm.whatsappNumber}
+                        onChange={(e) => setHeroForm({ ...heroForm, whatsappNumber: e.target.value })}
+                        placeholder="Contoh: 6282311776535"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Catatan Kaki Status Kartu</label>
+                      <input
+                        type="text"
+                        value={heroForm.footerNote}
+                        onChange={(e) => setHeroForm({ ...heroForm, footerNote: e.target.value })}
+                        placeholder="Approval Kursus via WhatsApp"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-bold text-slate-700">Pesan Awal Konsultasi WhatsApp</label>
+                      <input
+                        type="text"
+                        value={heroForm.whatsappMessage}
+                        onChange={(e) => setHeroForm({ ...heroForm, whatsappMessage: e.target.value })}
+                        placeholder="Assalamualaikum Admin Kalaamunaa, saya ingin tanya-tanya..."
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bagian 3: Poin Keuntungan Ringkas (Checklist) */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <div>
+                      <h4 className="font-bold text-base text-slate-900 flex items-center space-x-2">
+                        <span className="w-6 h-6 rounded-lg bg-blue-100 text-[#0047AB] text-xs font-extrabold flex items-center justify-center">C</span>
+                        <span>Poin Keuntungan Ringkas (Checklist Bawah)</span>
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Poin-poin checklist centang di bawah tombol aksi.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddBenefit}
+                      className="px-3.5 py-1.5 rounded-xl bg-blue-50 text-[#0047AB] hover:bg-blue-100 text-xs font-bold flex items-center space-x-1.5 transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Tambah Poin</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {heroForm.benefits.map((benefit, idx) => (
+                      <div key={idx} className="flex items-center space-x-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <input
+                          type="text"
+                          value={benefit}
+                          onChange={(e) => handleBenefitChange(idx, e.target.value)}
+                          className="flex-1 bg-white px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-hidden focus:border-[#0047AB]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveBenefit(idx)}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
+                          title="Hapus poin"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bagian 4: Kartu Metode Kalaamunaa (Visual Kanan) */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+                  <div className="border-b border-slate-100 pb-4">
+                    <h4 className="font-bold text-base text-slate-900 flex items-center space-x-2">
+                      <span className="w-6 h-6 rounded-lg bg-blue-100 text-[#0047AB] text-xs font-extrabold flex items-center justify-center">D</span>
+                      <span>Kartu Metode Kalaamunaa (Kotak Kanan)</span>
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Kustomisasi teks 3 tahapan belajar yang ditampilkan di kartu melayang kanan.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Judul Kartu</label>
+                      <input
+                        type="text"
+                        value={heroForm.cardTitle}
+                        onChange={(e) => setHeroForm({ ...heroForm, cardTitle: e.target.value })}
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-[#0047AB]"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Subjudul Kartu</label>
+                      <input
+                        type="text"
+                        value={heroForm.cardSubtitle}
+                        onChange={(e) => setHeroForm({ ...heroForm, cardSubtitle: e.target.value })}
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-[#0047AB]"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Badge Status</label>
+                      <input
+                        type="text"
+                        value={heroForm.cardBadge}
+                        onChange={(e) => setHeroForm({ ...heroForm, cardBadge: e.target.value })}
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-hidden focus:border-[#0047AB]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 3 Steps */}
+                  <div className="space-y-4 pt-2">
+                    {/* Tahap 1 */}
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                      <span className="text-xs font-extrabold text-[#0047AB]">Tahap 1</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <input
+                          type="text"
+                          value={heroForm.step1Title}
+                          onChange={(e) => setHeroForm({ ...heroForm, step1Title: e.target.value })}
+                          placeholder="Judul Tahap 1"
+                          className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold focus:outline-hidden focus:border-[#0047AB]"
+                        />
+                        <input
+                          type="text"
+                          value={heroForm.step1Desc}
+                          onChange={(e) => setHeroForm({ ...heroForm, step1Desc: e.target.value })}
+                          placeholder="Deskripsi Tahap 1"
+                          className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs focus:outline-hidden focus:border-[#0047AB]"
+                        />
+                        <input
+                          type="text"
+                          value={heroForm.step1Badge}
+                          onChange={(e) => setHeroForm({ ...heroForm, step1Badge: e.target.value })}
+                          placeholder="Badge Tahap 1"
+                          className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs focus:outline-hidden focus:border-[#0047AB]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Tahap 2 */}
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                      <span className="text-xs font-extrabold text-amber-700">Tahap 2</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <input
+                          type="text"
+                          value={heroForm.step2Title}
+                          onChange={(e) => setHeroForm({ ...heroForm, step2Title: e.target.value })}
+                          placeholder="Judul Tahap 2"
+                          className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold focus:outline-hidden focus:border-[#0047AB]"
+                        />
+                        <input
+                          type="text"
+                          value={heroForm.step2Desc}
+                          onChange={(e) => setHeroForm({ ...heroForm, step2Desc: e.target.value })}
+                          placeholder="Deskripsi Tahap 2"
+                          className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs focus:outline-hidden focus:border-[#0047AB]"
+                        />
+                        <input
+                          type="text"
+                          value={heroForm.step2Badge}
+                          onChange={(e) => setHeroForm({ ...heroForm, step2Badge: e.target.value })}
+                          placeholder="Badge Tahap 2"
+                          className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs focus:outline-hidden focus:border-[#0047AB]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Tahap 3 */}
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                      <span className="text-xs font-extrabold text-emerald-700">Tahap 3</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <input
+                          type="text"
+                          value={heroForm.step3Title}
+                          onChange={(e) => setHeroForm({ ...heroForm, step3Title: e.target.value })}
+                          placeholder="Judul Tahap 3"
+                          className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold focus:outline-hidden focus:border-[#0047AB]"
+                        />
+                        <input
+                          type="text"
+                          value={heroForm.step3Desc}
+                          onChange={(e) => setHeroForm({ ...heroForm, step3Desc: e.target.value })}
+                          placeholder="Deskripsi Tahap 3"
+                          className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs focus:outline-hidden focus:border-[#0047AB]"
+                        />
+                        <input
+                          type="text"
+                          value={heroForm.step3Badge}
+                          onChange={(e) => setHeroForm({ ...heroForm, step3Badge: e.target.value })}
+                          placeholder="Badge Tahap 3"
+                          className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs focus:outline-hidden focus:border-[#0047AB]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Save / Reset Bar */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleResetHero}
+                    className="w-full sm:w-auto px-5 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold flex items-center justify-center space-x-2 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>Kembalikan ke Default</span>
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#0047AB] hover:bg-[#003380] text-white text-xs sm:text-sm font-extrabold flex items-center justify-center space-x-2 shadow-md transition-all cursor-pointer"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Simpan Perubahan Teks Beranda</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* ============= SUB-TAB 2: KEUNGGULAN (FEATURES) ============= */}
+            {contentSubTab === 'features' && (
+              <form onSubmit={handleSaveFeatures} className="space-y-6">
+                {/* Header Bagian Keunggulan */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-5">
+                  <div className="border-b border-slate-100 pb-4">
+                    <h4 className="font-bold text-base text-slate-900 flex items-center space-x-2">
+                      <Sparkles className="w-5 h-5 text-[#0047AB]" />
+                      <span>Judul & Deskripsi Bagian Keunggulan</span>
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Teks pembuka untuk seksi keunggulan di landing page.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-bold text-slate-700">Badge Seksi</label>
+                      <input
+                        type="text"
+                        value={featuresForm.badge}
+                        onChange={(e) => setFeaturesForm({ ...featuresForm, badge: e.target.value })}
+                        placeholder="Contoh: Keunggulan Kalaamunaa"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-bold text-slate-700">Judul Utama Seksi Keunggulan</label>
+                      <input
+                        type="text"
+                        value={featuresForm.title}
+                        onChange={(e) => setFeaturesForm({ ...featuresForm, title: e.target.value })}
+                        placeholder="Contoh: Mengapa Belajar Bahasa Arab di Kalaamunaa?"
+                        required
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold focus:outline-hidden focus:border-[#0047AB]"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-bold text-slate-700">Deskripsi Pengantar Seksi Keunggulan</label>
+                      <textarea
+                        rows={3}
+                        value={featuresForm.description}
+                        onChange={(e) => setFeaturesForm({ ...featuresForm, description: e.target.value })}
+                        placeholder="Tuliskan deskripsi ringkas mengapa siswa memilih Kalaamunaa..."
+                        required
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Daftar Kartu Keunggulan */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                    <div>
+                      <h4 className="font-bold text-base text-slate-900">
+                        Daftar Kartu Keunggulan ({featuresForm.items.length})
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Anda dapat mengubah judul, penjelasan, badge, atau menambah kartu keunggulan baru.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddFeatureItem}
+                      className="px-4 py-2 rounded-xl bg-blue-50 text-[#0047AB] hover:bg-blue-100 text-xs font-bold flex items-center space-x-1.5 transition-colors cursor-pointer self-start sm:self-auto"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Tambah Kartu Keunggulan</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {featuresForm.items.map((item, idx) => (
+                      <div
+                        key={item.id || idx}
+                        className="p-5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-[#0047AB]/40 transition-colors space-y-4 relative group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-extrabold text-[#0047AB] px-2.5 py-1 rounded-md bg-white border border-slate-200">
+                            Kartu #{idx + 1}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFeatureItem(idx)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
+                            title="Hapus kartu ini"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-bold text-slate-600">Badge Kartu</label>
+                          <input
+                            type="text"
+                            value={item.badge}
+                            onChange={(e) => handleUpdateFeatureItem(idx, 'badge', e.target.value)}
+                            placeholder="Contoh: Video Eksklusif"
+                            className="w-full px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold focus:outline-hidden focus:border-[#0047AB]"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-bold text-slate-600">Judul Keunggulan</label>
+                          <input
+                            type="text"
+                            value={item.title}
+                            onChange={(e) => handleUpdateFeatureItem(idx, 'title', e.target.value)}
+                            placeholder="Judul keunggulan..."
+                            required
+                            className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold focus:outline-hidden focus:border-[#0047AB]"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-bold text-slate-600">Penjelasan / Deskripsi</label>
+                          <textarea
+                            rows={3}
+                            value={item.desc}
+                            onChange={(e) => handleUpdateFeatureItem(idx, 'desc', e.target.value)}
+                            placeholder="Uraian manfaat untuk siswa..."
+                            required
+                            className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs leading-relaxed focus:outline-hidden focus:border-[#0047AB]"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Save / Reset Bar */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleResetFeatures}
+                    className="w-full sm:w-auto px-5 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs sm:text-sm font-bold flex items-center justify-center space-x-2 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>Kembalikan ke Default</span>
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#0047AB] hover:bg-[#003380] text-white text-xs sm:text-sm font-extrabold flex items-center justify-center space-x-2 shadow-md transition-all cursor-pointer"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Simpan Perubahan Teks Keunggulan</span>
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         )}
 

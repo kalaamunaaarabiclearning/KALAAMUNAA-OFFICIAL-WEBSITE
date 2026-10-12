@@ -1,5 +1,5 @@
-import { Course, Order, OrderStatus, User, StudentProgress, Testimonial, AdminPost, CartItem } from '../types';
-import { INITIAL_COURSES, INITIAL_TESTIMONIALS, INITIAL_POSTS, INITIAL_USERS, ADMIN_CREDENTIALS } from '../data/initialData';
+import { Course, Order, OrderStatus, User, StudentProgress, Testimonial, AdminPost, CartItem, HeroContent, FeaturesContent } from '../types';
+import { INITIAL_COURSES, INITIAL_TESTIMONIALS, INITIAL_POSTS, INITIAL_USERS, ADMIN_CREDENTIALS, INITIAL_HERO_CONTENT, INITIAL_FEATURES_CONTENT } from '../data/initialData';
 
 const STORAGE_KEYS = {
   COURSES: 'kalaamunaa_courses',
@@ -10,6 +10,8 @@ const STORAGE_KEYS = {
   PROGRESS: 'kalaamunaa_progress',
   TESTIMONIALS: 'kalaamunaa_testimonials',
   POSTS: 'kalaamunaa_posts',
+  HERO_CONTENT: 'kalaamunaa_hero_content',
+  FEATURES_CONTENT: 'kalaamunaa_features_content',
 };
 
 // Initialize default state if not already set
@@ -25,6 +27,12 @@ export function initializeStorage() {
   }
   if (!localStorage.getItem(STORAGE_KEYS.POSTS)) {
     localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(INITIAL_POSTS));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.HERO_CONTENT)) {
+    localStorage.setItem(STORAGE_KEYS.HERO_CONTENT, JSON.stringify(INITIAL_HERO_CONTENT));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.FEATURES_CONTENT)) {
+    localStorage.setItem(STORAGE_KEYS.FEATURES_CONTENT, JSON.stringify(INITIAL_FEATURES_CONTENT));
   }
   if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
     // Provide a sample approved order for Ahmad Fauzan so the demo has immediate visual data
@@ -146,7 +154,7 @@ export function loginTeacher(usernameInput: string, passwordInput: string): { su
     setCurrentUser(adminUser);
     return { success: true, user: adminUser };
   }
-  return { success: false, message: 'Username atau password Guru salah. Pastikan Username: "Mudarris Kalaamunaa" dan Password sesuai petunjuk.' };
+  return { success: false, message: 'Username atau password Guru salah. Silakan periksa kembali.' };
 }
 
 export function loginStudent(emailInput: string, passwordInput: string): { success: boolean; user?: User; message?: string } {
@@ -409,3 +417,22 @@ export function generateWhatsAppOrderUrl(studentName: string, items: { title: st
   const encodedMessage = encodeURIComponent(message);
   return `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 }
+
+export function getHeroContent(): HeroContent {
+  const data = localStorage.getItem(STORAGE_KEYS.HERO_CONTENT);
+  return data ? JSON.parse(data) : INITIAL_HERO_CONTENT;
+}
+
+export function saveHeroContent(content: HeroContent): void {
+  localStorage.setItem(STORAGE_KEYS.HERO_CONTENT, JSON.stringify(content));
+}
+
+export function getFeaturesContent(): FeaturesContent {
+  const data = localStorage.getItem(STORAGE_KEYS.FEATURES_CONTENT);
+  return data ? JSON.parse(data) : INITIAL_FEATURES_CONTENT;
+}
+
+export function saveFeaturesContent(content: FeaturesContent): void {
+  localStorage.setItem(STORAGE_KEYS.FEATURES_CONTENT, JSON.stringify(content));
+}
+

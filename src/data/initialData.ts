@@ -1,4 +1,4 @@
-import { Course, Testimonial, AdminPost, User } from '../types';
+import { Course, Testimonial, AdminPost, User, HeroContent, FeaturesContent } from '../types';
 
 export const ADMIN_CREDENTIALS = {
   username: 'Mudarris Kalaamunaa',
@@ -317,3 +317,73 @@ Silakan pilih paket kursus yang Anda minati di halaman Katalog Kursus, lakukan c
     createdAt: '2026-04-02',
   },
 ];
+
+export const INITIAL_HERO_CONTENT: HeroContent = {
+  badge: 'Program Intensif Online Bersama Mudarris Kalaamunaa',
+  arabicQuote: 'تَعَلَّمِ العَرَبِيَّةَ فَإِنَّهَا مِنْ دِينِكُمْ',
+  title: "Kuasai Bahasa Arab Al-Qur'an & Percakapan Secara Terstruktur",
+  description: "Pelajari Nahwu, Sharaf, dan Muhadatsah praktis langkah demi langkah. Sistem pembelajaran terpadu dengan verifikasi video bertahap, kuis evaluasi, dan e-sertifikat kelulusan.",
+  exploreButtonText: 'Pilih Kursus Sekarang',
+  consultationButtonText: 'Konsultasi WhatsApp',
+  whatsappNumber: '6282311776535',
+  whatsappMessage: 'Assalamualaikum Admin Kalaamunaa, saya ingin tanya-tanya mengenai kursus bahasa Arab',
+  benefits: ['Materi dari Dasar', 'Kuis Tiap Bab', 'Sertifikat Resmi'],
+  cardTitle: 'Metode Kalaamunaa',
+  cardSubtitle: 'Sistem Belajar Bertingkat',
+  cardBadge: 'Terverifikasi',
+  step1Title: 'Tahap 1',
+  step1Desc: 'Tonton Video Materi YouTube',
+  step1Badge: 'Klik Selesai',
+  step2Title: 'Tahap 2',
+  step2Desc: 'Kerjakan Kuis Google Form',
+  step2Badge: 'Buka Materi',
+  step3Title: 'Tahap Akhir',
+  step3Desc: 'Ajukan E-Sertifikat Kelulusan',
+  step3Badge: 'Form Otomatis',
+  footerNote: 'Approval Kursus via WhatsApp',
+};
+
+export const INITIAL_FEATURES_CONTENT: FeaturesContent = {
+  badge: 'Keunggulan Kalaamunaa',
+  title: 'Mengapa Belajar Bahasa Arab di Kalaamunaa?',
+  description: 'Kami memadukan kemudahan teknologi modern dengan ketelitian kurikulum tradisional agar proses belajar bahasa Arab terasa ringan dan berbuah hasil nyata.',
+  items: [
+    {
+      id: 'feat-1',
+      title: 'Materi Video Tematik & YouTube Terpilih',
+      desc: 'Setiap pelajaran dikemas dalam penjelasan video yang padat, fokus, dan mudah dipahami, langsung dari Mudarris berpengalaman.',
+      badge: 'Video Eksklusif',
+    },
+    {
+      id: 'feat-2',
+      title: 'Sistem Kunci Belajar (Nonton & Kuis)',
+      desc: 'Tidak bisa melompat sebelum memahami! Anda wajib menonton video dan menyelesaikan kuis Google Form sebelum membuka materi selanjutnya.',
+      badge: 'Disiplin & Terukur',
+    },
+    {
+      id: 'feat-3',
+      title: 'Sertifikat Kelulusan Resmi',
+      desc: 'Selesaikan semua kuis hingga akhir silabus dan ajukan sertifikat kelulusan resmi Kalaamunaa yang terverifikasi.',
+      badge: 'Terverifikasi',
+    },
+    {
+      id: 'feat-4',
+      title: 'Verifikasi & Approval Cepat via WhatsApp',
+      desc: 'Sistem checkout terintegrasi WhatsApp 6282311776535 memastikan pendaftaran Anda langsung diverifikasi oleh Mudarris.',
+      badge: 'Keamanan Akses',
+    },
+    {
+      id: 'feat-5',
+      title: 'Fleksibel: Belajar Kapan Saja',
+      desc: 'Akses materi 24 jam tanpa batasan waktu dari smartphone, tablet, maupun laptop sesuai kenyamanan jadwal Anda.',
+      badge: 'Akses Fleksibel',
+    },
+    {
+      id: 'feat-6',
+      title: 'Bimbingan & Konsultasi Langsung',
+      desc: "Dukungan tanya-jawab langsung dengan Mudarris jika menemui kesulitan dalam memahami i'rab, tashrif, atau percakapan.",
+      badge: 'Bimbingan Aktif',
+    },
+  ],
+};
+

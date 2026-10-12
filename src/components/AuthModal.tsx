@@ -29,8 +29,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [regPhone, setRegPhone] = useState('');
 
   // Teacher Login fields
-  const [teacherUsername, setTeacherUsername] = useState('Mudarris Kalaamunaa');
-  const [teacherPassword, setTeacherPassword] = useState('KaLaAmUnAa123');
+  const [teacherUsername, setTeacherUsername] = useState('');
+  const [teacherPassword, setTeacherPassword] = useState('');
 
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -80,13 +80,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setTab('student');
     setStudentEmail('ahmad.fauzan@gmail.com');
     setStudentPassword('password123');
-    setErrorMsg('');
-  };
-
-  const setDemoTeacher = () => {
-    setTab('teacher');
-    setTeacherUsername('Mudarris Kalaamunaa');
-    setTeacherPassword('KaLaAmUnAa123');
     setErrorMsg('');
   };
 
@@ -292,25 +285,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 space-y-1">
                 <p className="font-bold flex items-center space-x-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-[#0047AB]" />
-                  <span>Kredensial Khusus Guru (Sesuai Permintaan):</span>
+                  <span>Akses Masuk Khusus Guru</span>
                 </p>
-                <p className="text-[11px]">
-                  Username: <span className="font-mono font-bold text-[#0047AB]">Mudarris Kalaamunaa</span>
-                </p>
-                <p className="text-[11px]">
-                  Password: <span className="font-mono font-bold text-[#0047AB]">KaLaAmUnAa123</span>
+                <p className="text-slate-600 text-[11px]">
+                  Silakan masukkan username atau email serta password akun Mudarris Anda.
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Username Guru</label>
+                <label className="text-xs font-bold text-slate-700">Username atau Email Guru</label>
                 <div className="relative">
                   <UserIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                   <input
                     type="text"
                     value={teacherUsername}
                     onChange={(e) => setTeacherUsername(e.target.value)}
-                    placeholder="Mudarris Kalaamunaa"
+                    placeholder="Masukkan username atau email"
                     required
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
                   />
@@ -325,7 +315,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     type="password"
                     value={teacherPassword}
                     onChange={(e) => setTeacherPassword(e.target.value)}
-                    placeholder="KaLaAmUnAa123"
+                    placeholder="Masukkan password"
                     required
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
                   />
@@ -338,16 +328,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               >
                 Masuk ke Dasbor Mudarris
               </button>
-
-              <div className="pt-1 text-center">
-                <button
-                  type="button"
-                  onClick={setDemoTeacher}
-                  className="text-xs text-[#0047AB] hover:underline font-semibold"
-                >
-                  Gunakan Kredensial Resmi Guru
-                </button>
-              </div>
             </form>
           )}
         </div>
