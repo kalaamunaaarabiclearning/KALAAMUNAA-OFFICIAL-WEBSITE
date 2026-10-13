@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Lock, Mail, User as UserIcon, Phone, ShieldCheck, GraduationCap, AlertCircle, Sparkles } from 'lucide-react';
+import { X, Lock, Mail, User as UserIcon, Phone, ShieldCheck, GraduationCap, AlertCircle, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { loginStudent, loginTeacher, registerStudent } from '../services/storage';
 import { User } from '../types';
 
@@ -18,19 +18,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const [tab, setTab] = useState<'student' | 'teacher' | 'register'>(defaultTab);
 
-  // Student Login fields
-  const [studentEmail, setStudentEmail] = useState('');
+  // Student Login fields (supports email or username)
+  const [studentIdentity, setStudentIdentity] = useState('');
   const [studentPassword, setStudentPassword] = useState('');
+  const [showStudentPassword, setShowStudentPassword] = useState(false);
 
   // Register fields
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regPhone, setRegPhone] = useState('');
+  const [showRegPassword, setShowRegPassword] = useState(false);
 
   // Teacher Login fields
   const [teacherUsername, setTeacherUsername] = useState('');
   const [teacherPassword, setTeacherPassword] = useState('');
+  const [showTeacherPassword, setShowTeacherPassword] = useState(false);
 
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -39,7 +42,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const handleStudentLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
-    const res = loginStudent(studentEmail, studentPassword);
+    const res = loginStudent(studentIdentity, studentPassword);
     if (res.success && res.user) {
       onLoginSuccess(res.user);
       onClose();
@@ -78,7 +81,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const setDemoStudent = () => {
     setTab('student');
-    setStudentEmail('ahmad.fauzan@gmail.com');
+    setStudentIdentity('ahmad.fauzan@gmail.com');
     setStudentPassword('password123');
     setErrorMsg('');
   };
@@ -161,14 +164,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {tab === 'student' && (
             <form onSubmit={handleStudentLogin} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Email Peserta</label>
+                <label className="text-xs font-bold text-slate-700">Email atau Username Peserta</label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  <UserIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                   <input
-                    type="email"
-                    value={studentEmail}
-                    onChange={(e) => setStudentEmail(e.target.value)}
-                    placeholder="nama@email.com"
+                    type="text"
+                    value={studentIdentity}
+                    onChange={(e) => setStudentIdentity(e.target.value)}
+                    placeholder="nama@email.com atau nama / username"
                     required
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB] focus:ring-1 focus:ring-[#0047AB]"
                   />
@@ -176,17 +179,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Password</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700">Password</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowStudentPassword(!showStudentPassword)}
+                    className="text-xs text-[#0047AB] hover:underline flex items-center space-x-1 cursor-pointer font-semibold"
+                  >
+                    {showStudentPassword ? (
+                      <>
+                        <EyeOff className="w-3.5 h-3.5" />
+                        <span>Sembunyikan</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Lihat Password</span>
+                      </>
+                    )}
+                  </button>
+                </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                   <input
-                    type="password"
+                    type={showStudentPassword ? 'text' : 'password'}
                     value={studentPassword}
                     onChange={(e) => setStudentPassword(e.target.value)}
                     placeholder="Masukkan password"
                     required
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB] focus:ring-1 focus:ring-[#0047AB]"
+                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB] focus:ring-1 focus:ring-[#0047AB]"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowStudentPassword(!showStudentPassword)}
+                    className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                    title={showStudentPassword ? 'Sembunyikan password' : 'Lihat password'}
+                  >
+                    {showStudentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -213,7 +243,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {tab === 'register' && (
             <form onSubmit={handleRegister} className="space-y-3.5">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">Nama Lengkap</label>
+                <label className="text-xs font-bold text-slate-700">Nama Lengkap (Bisa untuk Login)</label>
                 <div className="relative">
                   <UserIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                   <input
@@ -228,7 +258,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">Email Aktif</label>
+                <label className="text-xs font-bold text-slate-700">Email Aktif (Bisa untuk Login)</label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                   <input
@@ -257,17 +287,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">Password</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700">Password</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowRegPassword(!showRegPassword)}
+                    className="text-xs text-[#0047AB] hover:underline flex items-center space-x-1 cursor-pointer font-semibold"
+                  >
+                    {showRegPassword ? (
+                      <>
+                        <EyeOff className="w-3.5 h-3.5" />
+                        <span>Sembunyikan</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Lihat Password</span>
+                      </>
+                    )}
+                  </button>
+                </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                   <input
-                    type="password"
+                    type={showRegPassword ? 'text' : 'password'}
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
                     placeholder="Buat password akun Anda"
                     required
-                    className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
+                    className="w-full pl-10 pr-10 py-2 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegPassword(!showRegPassword)}
+                    className="absolute right-3.5 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                    title={showRegPassword ? 'Sembunyikan password' : 'Lihat password'}
+                  >
+                    {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -308,17 +365,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Password Guru</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700">Password Guru</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowTeacherPassword(!showTeacherPassword)}
+                    className="text-xs text-[#0047AB] hover:underline flex items-center space-x-1 cursor-pointer font-semibold"
+                  >
+                    {showTeacherPassword ? (
+                      <>
+                        <EyeOff className="w-3.5 h-3.5" />
+                        <span>Sembunyikan</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Lihat Password</span>
+                      </>
+                    )}
+                  </button>
+                </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                   <input
-                    type="password"
+                    type={showTeacherPassword ? 'text' : 'password'}
                     value={teacherPassword}
                     onChange={(e) => setTeacherPassword(e.target.value)}
                     placeholder="Masukkan password"
                     required
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
+                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-hidden focus:border-[#0047AB]"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowTeacherPassword(!showTeacherPassword)}
+                    className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                    title={showTeacherPassword ? 'Sembunyikan password' : 'Lihat password'}
+                  >
+                    {showTeacherPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 

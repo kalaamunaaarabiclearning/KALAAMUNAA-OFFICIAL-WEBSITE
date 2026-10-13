@@ -203,7 +203,16 @@ export function initializeStorage() {
         });
       } else {
         const loaded: User[] = [];
-        snapshot.forEach((d) => loaded.push(d.data() as User));
+        const passwordsMap = JSON.parse(localStorage.getItem('kalaamunaa_passwords') || '{}');
+        snapshot.forEach((d) => {
+          const u = d.data() as User;
+          loaded.push(u);
+          if (u.password) {
+            passwordsMap[u.email.toLowerCase()] = u.password;
+            passwordsMap[u.name.toLowerCase()] = u.password;
+          }
+        });
+        localStorage.setItem('kalaamunaa_passwords', JSON.stringify(passwordsMap));
         localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(loaded));
         notifyDataChanged();
       }
@@ -361,20 +370,36 @@ export function loginTeacher(usernameInput: string, passwordInput: string): { su
   return { success: false, message: 'Username atau password Guru salah. Silakan periksa kembali.' };
 }
 
-export function loginStudent(emailInput: string, passwordInput: string): { success: boolean; user?: User; message?: string } {
+export function loginStudent(identityInput: string, passwordInput: string): { success: boolean; user?: User; message?: string } {
   const users = getUsers();
-  const user = users.find((u) => u.email.toLowerCase() === emailInput.trim().toLowerCase());
-  
-  if (!user) {
-    return { success: false, message: 'Email tidak ditemukan. Silakan mendaftar terlebih dahulu.' };
+  const cleanInput = identityInput.trim().toLowerCase();
+  const cleanPass = passwordInput.trim();
+
+  if (!cleanInput) {
+    return { success: false, message: 'Silakan masukkan email atau username Anda.' };
   }
 
-  // Stored password check via localStorage credentials map
-  const passwordsMap = JSON.parse(localStorage.getItem('kalaamunaa_passwords') || '{}');
-  const storedPassword = passwordsMap[user.email.toLowerCase()] || 'password123';
+  // Find user by email, name/username, or phone number
+  const user = users.find((u) => {
+    const emailMatch = Boolean(u.email && u.email.toLowerCase() === cleanInput);
+    const nameMatch = Boolean(u.name && u.name.toLowerCase() === cleanInput);
+    const phoneMatch = Boolean(u.phone && cleanInput.length >= 8 && u.phone.replace(/[^0-9]/g, '') === cleanInput.replace(/[^0-9]/g, ''));
+    return emailMatch || nameMatch || phoneMatch;
+  });
+  
+  if (!user) {
+    return { success: false, message: 'Akun dengan email atau username tersebut tidak ditemukan. Silakan periksa kembali atau daftar akun baru.' };
+  }
 
-  if (storedPassword !== passwordInput) {
-    return { success: false, message: 'Password salah. Silakan coba lagi.' };
+  // Stored password check via user.password, localStorage passwordsMap, or demo default
+  const passwordsMap = JSON.parse(localStorage.getItem('kalaamunaa_passwords') || '{}');
+  const storedPassword = user.password || 
+                         passwordsMap[user.email.toLowerCase()] || 
+                         passwordsMap[user.name.toLowerCase()] || 
+                         (user.id === 'user-student-demo' ? 'password123' : '');
+
+  if (!storedPassword || storedPassword !== cleanPass) {
+    return { success: false, message: 'Password salah. Silakan coba lagi atau klik ikon mata untuk melihat password.' };
   }
 
   setCurrentUser(user);
@@ -383,26 +408,32 @@ export function loginStudent(emailInput: string, passwordInput: string): { succe
 
 export function registerStudent(name: string, email: string, password: string, phone: string = ''): { success: boolean; user?: User; message?: string } {
   const users = getUsers();
-  const existing = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-  if (existing) {
-    return { success: false, message: 'Email ini sudah terdaftar. Silakan login.' };
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanName = name.trim();
+  const cleanPass = password.trim();
+
+  const existingEmail = users.find((u) => u.email.toLowerCase() === cleanEmail);
+  if (existingEmail) {
+    return { success: false, message: 'Email ini sudah terdaftar. Silakan masuk (login).' };
   }
 
   const newUser: User = {
     id: 'user-' + Date.now(),
-    name: name.trim(),
-    email: email.trim().toLowerCase(),
+    name: cleanName,
+    email: cleanEmail,
     phone: phone.trim(),
     role: 'student',
+    password: cleanPass,
     createdAt: new Date().toISOString(),
   };
 
   users.push(newUser);
   saveUsers(users);
 
-  // Save password
+  // Save password in map under both email and name/username
   const passwordsMap = JSON.parse(localStorage.getItem('kalaamunaa_passwords') || '{}');
-  passwordsMap[newUser.email] = password;
+  passwordsMap[newUser.email.toLowerCase()] = cleanPass;
+  passwordsMap[newUser.name.toLowerCase()] = cleanPass;
   localStorage.setItem('kalaamunaa_passwords', JSON.stringify(passwordsMap));
 
   setCurrentUser(newUser);
