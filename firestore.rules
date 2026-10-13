@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny for unmatched documents
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection verification endpoint
+    match /test/{testId} {
+      allow read, write: if true;
+    }
+
+    // Course catalog (public catalog and syllabus)
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Enrollment orders (checkout submissions and admin status approvals)
+    match /orders/{orderId} {
+      allow read, write: if true;
+    }
+
+    // Registered student and instructor profiles
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    // Student reviews & testimonials
+    match /testimonials/{testimonialId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Articles & announcements
+    match /posts/{postId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Homepage customizations (hero and features)
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

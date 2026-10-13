@@ -10,6 +10,7 @@ import {
   getPosts, 
   getHeroContent,
   getFeaturesContent,
+  subscribeToDataChanges,
   initializeStorage 
 } from './services/storage';
 import { User, Course, CartItem, Testimonial, AdminPost, HeroContent, FeaturesContent } from './types';
@@ -29,9 +30,13 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { Classroom } from './components/Classroom';
 
 export default function App() {
-  // Initialize storage
+  // Initialize storage & subscribe to live Firebase Firestore updates
   useEffect(() => {
     initializeStorage();
+    const unsubscribe = subscribeToDataChanges(() => {
+      refreshAppData();
+    });
+    return () => unsubscribe();
   }, []);
 
   // Main state

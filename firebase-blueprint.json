@@ -1,0 +1,128 @@
+{
+  "entities": {
+    "Course": {
+      "title": "Course",
+      "description": "Arabic course catalog and lesson syllabus",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for course" },
+        "title": { "type": "string", "description": "Course title" },
+        "arabicTitle": { "type": "string", "description": "Course title in Arabic" },
+        "slug": { "type": "string", "description": "URL slug" },
+        "category": { "type": "string", "description": "Course category" },
+        "level": { "type": "string", "description": "Proficiency level" },
+        "price": { "type": "number", "description": "Price in Rupiah" },
+        "originalPrice": { "type": "number", "description": "Original crossed-out price" },
+        "thumbnail": { "type": "string", "description": "Image URL thumbnail" },
+        "description": { "type": "string", "description": "Detailed course description" },
+        "whatYouWillGet": { "type": "array", "description": "List of learning outcomes" },
+        "features": { "type": "array", "description": "List of feature points" },
+        "certificateFormUrl": { "type": "string", "description": "Google Form URL for certificate request" },
+        "lessons": { "type": "array", "description": "Array of lesson objects" },
+        "status": { "type": "string", "description": "published or draft" },
+        "instructorName": { "type": "string", "description": "Instructor name" }
+      },
+      "required": ["id", "title", "price"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Student enrollment checkout order",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Order ID" },
+        "studentId": { "type": "string", "description": "Student user ID" },
+        "studentName": { "type": "string", "description": "Full name of the student" },
+        "studentEmail": { "type": "string", "description": "Student email address" },
+        "studentPhone": { "type": "string", "description": "Student WhatsApp phone number" },
+        "items": { "type": "array", "description": "Array of ordered course items" },
+        "totalPrice": { "type": "number", "description": "Total payment price in IDR" },
+        "status": { "type": "string", "description": "pending, approved, or rejected" },
+        "createdAt": { "type": "string", "description": "Order creation ISO timestamp" },
+        "approvedAt": { "type": "string", "description": "Order approval ISO timestamp" }
+      },
+      "required": ["id", "studentName", "studentEmail", "totalPrice", "status"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Registered student or teacher profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "User identifier" },
+        "name": { "type": "string", "description": "User full name" },
+        "email": { "type": "string", "description": "Email address" },
+        "role": { "type": "string", "description": "student, teacher, or admin" },
+        "phone": { "type": "string", "description": "Phone or WhatsApp contact" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "required": ["id", "name", "email", "role"]
+    },
+    "Testimonial": {
+      "title": "Testimonial",
+      "description": "Student review and testimony",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Testimonial ID" },
+        "name": { "type": "string", "description": "Reviewer student name" },
+        "courseName": { "type": "string", "description": "Name of course reviewed" },
+        "rating": { "type": "number", "description": "Rating score 1 to 5" },
+        "comment": { "type": "string", "description": "Testimonial comment text" },
+        "avatar": { "type": "string", "description": "Avatar image URL" },
+        "createdAt": { "type": "string", "description": "Creation timestamp" }
+      },
+      "required": ["id", "name", "comment"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "Admin article and announcement post",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Post ID" },
+        "title": { "type": "string", "description": "Post title" },
+        "category": { "type": "string", "description": "Post category" },
+        "excerpt": { "type": "string", "description": "Short excerpt" },
+        "content": { "type": "string", "description": "Full article markdown content" },
+        "author": { "type": "string", "description": "Author name" },
+        "thumbnail": { "type": "string", "description": "Cover thumbnail image URL" },
+        "createdAt": { "type": "string", "description": "Publication date" }
+      },
+      "required": ["id", "title", "content"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Landing page customization for hero and features sections",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Setting key identifier" },
+        "content": { "type": "string", "description": "Serialized configuration JSON string" },
+        "updatedAt": { "type": "string", "description": "Update timestamp" }
+      },
+      "required": ["id"]
+    }
+  },
+  "firestore": {
+    "/courses/{courseId}": {
+      "schema": "Course",
+      "description": "Public catalog of Arabic learning courses"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Student course purchase orders"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Registered students and instructors"
+    },
+    "/testimonials/{testimonialId}": {
+      "schema": "Testimonial",
+      "description": "Student testimonials and reviews"
+    },
+    "/posts/{postId}": {
+      "schema": "Post",
+      "description": "Articles, announcements, and tips"
+    },
+    "/settings/{settingId}": {
+      "schema": "SiteSettings",
+      "description": "Customizable homepage hero and features configuration"
+    }
+  }
+}

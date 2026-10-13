@@ -1,5 +1,32 @@
-import { Course, Order, OrderStatus, User, StudentProgress, Testimonial, AdminPost, CartItem, HeroContent, FeaturesContent } from '../types';
-import { INITIAL_COURSES, INITIAL_TESTIMONIALS, INITIAL_POSTS, INITIAL_USERS, ADMIN_CREDENTIALS, INITIAL_HERO_CONTENT, INITIAL_FEATURES_CONTENT } from '../data/initialData';
+import { 
+  collection, 
+  doc, 
+  setDoc, 
+  deleteDoc, 
+  onSnapshot 
+} from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from './firebase';
+import { 
+  Course, 
+  Order, 
+  OrderStatus, 
+  User, 
+  StudentProgress, 
+  Testimonial, 
+  AdminPost, 
+  CartItem, 
+  HeroContent, 
+  FeaturesContent 
+} from '../types';
+import { 
+  INITIAL_COURSES, 
+  INITIAL_TESTIMONIALS, 
+  INITIAL_POSTS, 
+  INITIAL_USERS, 
+  ADMIN_CREDENTIALS, 
+  INITIAL_HERO_CONTENT, 
+  INITIAL_FEATURES_CONTENT 
+} from '../data/initialData';
 
 const STORAGE_KEYS = {
   COURSES: 'kalaamunaa_courses',
@@ -14,8 +41,32 @@ const STORAGE_KEYS = {
   FEATURES_CONTENT: 'kalaamunaa_features_content',
 };
 
-// Initialize default state if not already set
+// Event emitter for real-time Firestore updates across the application
+type Listener = () => void;
+const changeListeners = new Set<Listener>();
+
+export function subscribeToDataChanges(listener: Listener): () => void {
+  changeListeners.add(listener);
+  return () => {
+    changeListeners.delete(listener);
+  };
+}
+
+function notifyDataChanged() {
+  changeListeners.forEach((fn) => {
+    try {
+      fn();
+    } catch (e) {
+      console.error('Error notifying data change:', e);
+    }
+  });
+}
+
+let isFirestoreInitialized = false;
+
+// Initialize default state & connect live Firestore syncing
 export function initializeStorage() {
+  // 1. Initial LocalStorage fallback setup
   if (!localStorage.getItem(STORAGE_KEYS.COURSES)) {
     localStorage.setItem(STORAGE_KEYS.COURSES, JSON.stringify(INITIAL_COURSES));
   }
@@ -35,7 +86,6 @@ export function initializeStorage() {
     localStorage.setItem(STORAGE_KEYS.FEATURES_CONTENT, JSON.stringify(INITIAL_FEATURES_CONTENT));
   }
   if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
-    // Provide a sample approved order for Ahmad Fauzan so the demo has immediate visual data
     const sampleOrders: Order[] = [
       {
         id: 'ord-1001',
@@ -76,7 +126,6 @@ export function initializeStorage() {
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(sampleOrders));
   }
 
-  // Provide initial student progress for demo user
   if (!localStorage.getItem(STORAGE_KEYS.PROGRESS)) {
     const sampleProgress: Record<string, StudentProgress> = {
       'user-student-demo_course-nahwu-dasar': {
@@ -91,6 +140,141 @@ export function initializeStorage() {
     };
     localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(sampleProgress));
   }
+
+  // 2. Initialize Firestore Live Syncing (once)
+  if (isFirestoreInitialized) return;
+  isFirestoreInitialized = true;
+
+  try {
+    // --- COURSES SYNC ---
+    const coursesPath = 'courses';
+    onSnapshot(collection(db, coursesPath), (snapshot) => {
+      if (snapshot.empty) {
+        // Seed initial courses to Firebase Firestore
+        INITIAL_COURSES.forEach(async (course) => {
+          try {
+            await setDoc(doc(db, coursesPath, course.id), course);
+          } catch (err) {
+            handleFirestoreError(err, OperationType.WRITE, `${coursesPath}/${course.id}`);
+          }
+        });
+      } else {
+        const loaded: Course[] = [];
+        snapshot.forEach((d) => loaded.push(d.data() as Course));
+        localStorage.setItem(STORAGE_KEYS.COURSES, JSON.stringify(loaded));
+        notifyDataChanged();
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, coursesPath);
+    });
+
+    // --- ORDERS SYNC ---
+    const ordersPath = 'orders';
+    onSnapshot(collection(db, ordersPath), (snapshot) => {
+      if (snapshot.empty) {
+        const initialOrders = JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS) || '[]');
+        initialOrders.forEach(async (order: Order) => {
+          try {
+            await setDoc(doc(db, ordersPath, order.id), order);
+          } catch (err) {
+            handleFirestoreError(err, OperationType.WRITE, `${ordersPath}/${order.id}`);
+          }
+        });
+      } else {
+        const loaded: Order[] = [];
+        snapshot.forEach((d) => loaded.push(d.data() as Order));
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(loaded));
+        notifyDataChanged();
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, ordersPath);
+    });
+
+    // --- USERS SYNC ---
+    const usersPath = 'users';
+    onSnapshot(collection(db, usersPath), (snapshot) => {
+      if (snapshot.empty) {
+        INITIAL_USERS.forEach(async (user) => {
+          try {
+            await setDoc(doc(db, usersPath, user.id), user);
+          } catch (err) {
+            handleFirestoreError(err, OperationType.WRITE, `${usersPath}/${user.id}`);
+          }
+        });
+      } else {
+        const loaded: User[] = [];
+        snapshot.forEach((d) => loaded.push(d.data() as User));
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(loaded));
+        notifyDataChanged();
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, usersPath);
+    });
+
+    // --- TESTIMONIALS SYNC ---
+    const testimonialsPath = 'testimonials';
+    onSnapshot(collection(db, testimonialsPath), (snapshot) => {
+      if (snapshot.empty) {
+        INITIAL_TESTIMONIALS.forEach(async (item) => {
+          try {
+            await setDoc(doc(db, testimonialsPath, item.id), item);
+          } catch (err) {
+            handleFirestoreError(err, OperationType.WRITE, `${testimonialsPath}/${item.id}`);
+          }
+        });
+      } else {
+        const loaded: Testimonial[] = [];
+        snapshot.forEach((d) => loaded.push(d.data() as Testimonial));
+        localStorage.setItem(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(loaded));
+        notifyDataChanged();
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, testimonialsPath);
+    });
+
+    // --- POSTS SYNC ---
+    const postsPath = 'posts';
+    onSnapshot(collection(db, postsPath), (snapshot) => {
+      if (snapshot.empty) {
+        INITIAL_POSTS.forEach(async (item) => {
+          try {
+            await setDoc(doc(db, postsPath, item.id), item);
+          } catch (err) {
+            handleFirestoreError(err, OperationType.WRITE, `${postsPath}/${item.id}`);
+          }
+        });
+      } else {
+        const loaded: AdminPost[] = [];
+        snapshot.forEach((d) => loaded.push(d.data() as AdminPost));
+        localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(loaded));
+        notifyDataChanged();
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, postsPath);
+    });
+
+    // --- SETTINGS (HERO & FEATURES) SYNC ---
+    const settingsPath = 'settings';
+    onSnapshot(collection(db, settingsPath), (snapshot) => {
+      if (snapshot.empty) {
+        setDoc(doc(db, settingsPath, 'hero'), { ...INITIAL_HERO_CONTENT }).catch(console.error);
+        setDoc(doc(db, settingsPath, 'features'), { ...INITIAL_FEATURES_CONTENT }).catch(console.error);
+      } else {
+        snapshot.forEach((docItem) => {
+          if (docItem.id === 'hero') {
+            localStorage.setItem(STORAGE_KEYS.HERO_CONTENT, JSON.stringify(docItem.data()));
+          } else if (docItem.id === 'features') {
+            localStorage.setItem(STORAGE_KEYS.FEATURES_CONTENT, JSON.stringify(docItem.data()));
+          }
+        });
+        notifyDataChanged();
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, settingsPath);
+    });
+  } catch (err) {
+    console.error('Firestore initialization error:', err);
+  }
 }
 
 // ---------------- COURSES ----------------
@@ -102,6 +286,16 @@ export function getCourses(): Course[] {
 
 export function saveCourses(courses: Course[]) {
   localStorage.setItem(STORAGE_KEYS.COURSES, JSON.stringify(courses));
+  notifyDataChanged();
+
+  // Async write to Firebase Firestore
+  courses.forEach(async (course) => {
+    try {
+      await setDoc(doc(db, 'courses', course.id), course);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `courses/${course.id}`);
+    }
+  });
 }
 
 export function getCourseById(id: string): Course | undefined {
@@ -118,6 +312,16 @@ export function getUsers(): User[] {
 
 export function saveUsers(users: User[]) {
   localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+  notifyDataChanged();
+
+  // Async write to Firebase Firestore
+  users.forEach(async (user) => {
+    try {
+      await setDoc(doc(db, 'users', user.id), user);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `users/${user.id}`);
+    }
+  });
 }
 
 export function getCurrentUser(): User | null {
@@ -179,9 +383,9 @@ export function loginStudent(emailInput: string, passwordInput: string): { succe
 
 export function registerStudent(name: string, email: string, password: string, phone: string = ''): { success: boolean; user?: User; message?: string } {
   const users = getUsers();
-  const exists = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-  if (exists) {
-    return { success: false, message: 'Email sudah terdaftar. Silakan login langsung.' };
+  const existing = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
+  if (existing) {
+    return { success: false, message: 'Email ini sudah terdaftar. Silakan login.' };
   }
 
   const newUser: User = {
@@ -245,6 +449,16 @@ export function getOrders(): Order[] {
 
 export function saveOrders(orders: Order[]) {
   localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+  notifyDataChanged();
+
+  // Async write to Firebase Firestore
+  orders.forEach(async (order) => {
+    try {
+      await setDoc(doc(db, 'orders', order.id), order);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `orders/${order.id}`);
+    }
+  });
 }
 
 export function createOrder(student: User, cartItems: CartItem[]): Order {
@@ -344,6 +558,11 @@ export function saveStudentProgress(progress: StudentProgress) {
   const key = `${progress.studentId}_${progress.courseId}`;
   allProgress[key] = progress;
   localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(allProgress));
+
+  // Async write to Firebase
+  setDoc(doc(db, 'progress', key), progress).catch((err) => {
+    console.error('Failed to save progress to Firestore:', err);
+  });
 }
 
 // ---------------- TESTIMONIALS & POSTS ----------------
@@ -355,6 +574,15 @@ export function getTestimonials(): Testimonial[] {
 
 export function saveTestimonials(testimonials: Testimonial[]) {
   localStorage.setItem(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(testimonials));
+  notifyDataChanged();
+
+  testimonials.forEach(async (t) => {
+    try {
+      await setDoc(doc(db, 'testimonials', t.id), t);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `testimonials/${t.id}`);
+    }
+  });
 }
 
 export function getPosts(): AdminPost[] {
@@ -365,6 +593,15 @@ export function getPosts(): AdminPost[] {
 
 export function savePosts(posts: AdminPost[]) {
   localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(posts));
+  notifyDataChanged();
+
+  posts.forEach(async (p) => {
+    try {
+      await setDoc(doc(db, 'posts', p.id), p);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `posts/${p.id}`);
+    }
+  });
 }
 
 // ---------------- HELPERS ----------------
@@ -373,15 +610,13 @@ export function formatRupiah(amount: number): string {
     style: 'currency',
     currency: 'IDR',
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
   }).format(amount);
 }
 
-// Convert various YouTube link forms to standard embed URL
-export function getYouTubeEmbedUrl(url: string): string {
+// Extracts clean embed URL from various YouTube formats
+export function getYoutubeEmbedUrl(url: string): string {
   if (!url) return '';
-  // If already embed URL
-  if (url.includes('youtube.com/embed/')) return url;
+  if (url.includes('/embed/')) return url;
 
   let videoId = '';
   // youtu.be/VIDEO_ID
@@ -403,8 +638,10 @@ export function getYouTubeEmbedUrl(url: string): string {
   return url;
 }
 
+export const getYouTubeEmbedUrl = getYoutubeEmbedUrl;
+
+
 // WhatsApp link generator matching exact user requirement:
-// "Assalamualaikum Admin Kalaamunaa,\nSaya {Nama siswa} ingin mengikuti kursus [kursus 1 x harganya], [kursus 2 x harganya]...dan seterusnya sesuai paket kursus yang dia pilih. Total (Rpxxxx sesuai total kurus yang dia pesan diisi otomatis)"
 export function generateWhatsAppOrderUrl(studentName: string, items: { title: string; price: number }[], totalPrice: number): string {
   const phoneNumber = '6282311776535';
   
@@ -419,20 +656,41 @@ export function generateWhatsAppOrderUrl(studentName: string, items: { title: st
 }
 
 export function getHeroContent(): HeroContent {
+  initializeStorage();
   const data = localStorage.getItem(STORAGE_KEYS.HERO_CONTENT);
   return data ? JSON.parse(data) : INITIAL_HERO_CONTENT;
 }
 
 export function saveHeroContent(content: HeroContent): void {
   localStorage.setItem(STORAGE_KEYS.HERO_CONTENT, JSON.stringify(content));
+  notifyDataChanged();
+
+  // Async write to Firebase settings
+  try {
+    setDoc(doc(db, 'settings', 'hero'), content).catch((err) => {
+      handleFirestoreError(err, OperationType.WRITE, 'settings/hero');
+    });
+  } catch (err) {
+    console.error('Error saving hero to Firestore:', err);
+  }
 }
 
 export function getFeaturesContent(): FeaturesContent {
+  initializeStorage();
   const data = localStorage.getItem(STORAGE_KEYS.FEATURES_CONTENT);
   return data ? JSON.parse(data) : INITIAL_FEATURES_CONTENT;
 }
 
 export function saveFeaturesContent(content: FeaturesContent): void {
   localStorage.setItem(STORAGE_KEYS.FEATURES_CONTENT, JSON.stringify(content));
-}
+  notifyDataChanged();
 
+  // Async write to Firebase settings
+  try {
+    setDoc(doc(db, 'settings', 'features'), content).catch((err) => {
+      handleFirestoreError(err, OperationType.WRITE, 'settings/features');
+    });
+  } catch (err) {
+    console.error('Error saving features to Firestore:', err);
+  }
+}
